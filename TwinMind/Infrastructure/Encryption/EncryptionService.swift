@@ -6,8 +6,6 @@
 //  Design decision: AES-256-GCM provides authenticated encryption, ensuring both
 //  confidentiality and integrity. The encryption key is stored in Keychain.
 //
-//  Created by Claude Code on 2026-03-04.
-//
 
 import Foundation
 import CryptoKit
