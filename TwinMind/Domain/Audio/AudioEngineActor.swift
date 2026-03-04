@@ -130,8 +130,11 @@ public actor AudioEngineActor: AudioEngineProtocol {
         // Create session directory
         _ = try audioFileManager.createSessionDirectory(sessionId: sessionId)
 
-        // Start the audio engine
-        try startEngine()
+        // Connect input node to output node (required for engine graph)
+        let inputNode = audioEngine.inputNode
+        let outputNode = audioEngine.outputNode
+        let inputFormat = inputNode.outputFormat(forBus: 0)
+        audioEngine.connect(inputNode, to: outputNode, format: inputFormat)
 
         // Initialize segment writer
         let segmentURL = audioFileManager.segmentFilePath(sessionId: sessionId, segmentIndex: 0)
@@ -144,6 +147,9 @@ public actor AudioEngineActor: AudioEngineProtocol {
 
         // Install tap on input node
         try installInputTap(sessionId: sessionId, quality: quality)
+
+        // Start the audio engine
+        try startEngine()
 
         // Update state
         setState(.recording(startedAt: Date()))
