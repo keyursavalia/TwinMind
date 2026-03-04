@@ -14,7 +14,7 @@ import Foundation
 /// This enum represents the lifecycle state of a session entity in SwiftData,
 /// from active recording through completion or failure. Unlike `RecordingState`,
 /// this type is optimized for persistence and querying.
-public enum SessionState: String, Sendable, Equatable, Codable {
+public enum SessionState: String, Sendable, Equatable, Codable, Comparable {
 
     /// Session is currently recording or paused.
     case active
@@ -30,6 +30,17 @@ public enum SessionState: String, Sendable, Equatable, Codable {
 
     /// Session was cancelled by the user before completion.
     case cancelled
+
+    /// Comparable conformance for sorting.
+    /// Order: active < paused < completed < cancelled < failed
+    public static func < (lhs: SessionState, rhs: SessionState) -> Bool {
+        let order: [SessionState] = [.active, .paused, .completed, .cancelled, .failed]
+        guard let lhsIndex = order.firstIndex(of: lhs),
+              let rhsIndex = order.firstIndex(of: rhs) else {
+            return false
+        }
+        return lhsIndex < rhsIndex
+    }
 }
 
 // MARK: - Computed Properties
