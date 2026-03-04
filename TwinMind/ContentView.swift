@@ -2,60 +2,89 @@
 //  ContentView.swift
 //  TwinMind
 //
-//  Created by Keyur Savalia on 3/4/26.
+//  Purpose: Main content view of the application.
+//  Design decision: Simple tab view with Recording as the primary screen.
+//  Future tabs can include session list and settings.
 //
 
 import SwiftUI
-import SwiftData
 
+/// Main content view of the TwinMind application.
+///
+/// This view provides the primary navigation structure and
+/// instantiates view models with injected dependencies.
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+
+    // MARK: - Properties
+
+    let dependencies: AppDependencies
+
+    // MARK: - Body
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        TabView {
+            // Recording tab
+            RecordingView(
+                viewModel: RecordingViewModel(
+                    audioEngine: dependencies.audioEngine,
+                    transcriptionPipeline: dependencies.transcriptionPipeline,
+                    dataManager: dependencies.dataManager
+                )
+            )
+            .tabItem {
+                Label("Record", systemImage: "mic.fill")
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+            // Sessions tab (placeholder)
+            SessionsPlaceholderView()
+                .tabItem {
+                    Label("Sessions", systemImage: "list.bullet")
+                }
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+            // Settings tab (placeholder)
+            SettingsPlaceholderView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+// MARK: - Placeholder Views
+
+/// Placeholder for sessions list view.
+private struct SessionsPlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            EmptyStateView.noSessions {
+                // Navigate to recording tab
+            }
+            .navigationTitle("Sessions")
+        }
+    }
+}
+
+/// Placeholder for settings view.
+private struct SettingsPlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("About") {
+                    LabeledContent("Version", value: "1.0.0")
+                    LabeledContent("Build", value: "1")
+                }
+
+                Section("Recording") {
+                    Text("Recording quality settings")
+                    Text("Storage management")
+                }
+
+                Section("Transcription") {
+                    Text("Service selection")
+                    Text("Language settings")
+                }
+            }
+            .navigationTitle("Settings")
+        }
+    }
 }
