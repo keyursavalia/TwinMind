@@ -8,6 +8,7 @@
 //
 
 import Foundation
+internal import os
 
 /// Whisper API service for audio transcription via OpenAI.
 ///
