@@ -8,6 +8,7 @@
 //
 
 import Foundation
+internal import os
 
 /// Configuration manager for app settings and API keys.
 ///
