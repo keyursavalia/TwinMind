@@ -2,31 +2,84 @@
 //  TwinMindApp.swift
 //  TwinMind
 //
-//  Created by Keyur Savalia on 3/4/26.
+//  Purpose: App entry point and dependency injection setup.
+//  Design decision: Initializes AppDependencies on app launch and injects
+//  via environment for clean, testable architecture.
 //
 
 import SwiftUI
 import SwiftData
+internal import os
 
 @main
 struct TwinMindApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @State private var dependencies: AppDependencies?
+    @State private var initializationError: Error?
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if let dependencies = dependencies {
+                    ContentView(dependencies: dependencies)
+                } else if let error = initializationError {
+                    ErrorView(error: error)
+                } else {
+                    LoadingStateView.fullScreen(message: "Initializing...")
+                }
+            }
+            .task {
+                await initializeDependencies()
+            }
         }
-        .modelContainer(sharedModelContainer)
+    }
+
+    // MARK: - Initialization
+
+    @MainActor
+    private func initializeDependencies() async {
+        do {
+            AppLogger.lifecycle.info("TwinMindApp launching")
+
+            dependencies = try AppDependencies()
+
+            AppLogger.lifecycle.info("TwinMindApp initialized successfully")
+
+        } catch {
+            AppLogger.lifecycle.error("Failed to initialize app", error: error)
+            initializationError = error
+        }
+    }
+}
+
+// MARK: - ErrorView
+
+/// View displayed when app initialization fails.
+private struct ErrorView: View {
+    let error: Error
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.red)
+
+            Text("Initialization Failed")
+                .font(.title)
+                .fontWeight(.bold)
+
+            Text(error.localizedDescription)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
+            Button("Quit") {
+                exit(1)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+        }
+        .padding()
     }
 }
