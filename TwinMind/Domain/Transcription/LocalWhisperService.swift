@@ -8,6 +8,7 @@
 //
 
 import Foundation
+internal import os
 
 /// Local Whisper service stub for on-device transcription.
 ///
