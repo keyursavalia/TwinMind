@@ -23,28 +23,28 @@ public enum SessionQueries {
     /// Predicate for active sessions (recording or paused).
     public static var active: Predicate<RecordingSession> {
         #Predicate<RecordingSession> { session in
-            session.state == SessionState.active || session.state == SessionState.paused
+            session.state.rawValue == "active" || session.state.rawValue == "paused"
         }
     }
 
     /// Predicate for completed sessions.
     public static var completed: Predicate<RecordingSession> {
         #Predicate<RecordingSession> { session in
-            session.state == SessionState.completed
+            session.state.rawValue == "completed"
         }
     }
 
     /// Predicate for failed sessions.
     public static var failed: Predicate<RecordingSession> {
         #Predicate<RecordingSession> { session in
-            session.state == SessionState.failed
+            session.state.rawValue == "failed"
         }
     }
 
     /// Predicate for cancelled sessions.
     public static var cancelled: Predicate<RecordingSession> {
         #Predicate<RecordingSession> { session in
-            session.state == SessionState.cancelled
+            session.state.rawValue == "cancelled"
         }
     }
 
@@ -53,8 +53,9 @@ public enum SessionQueries {
     /// - Parameter state: The session state to filter by.
     /// - Returns: A predicate matching sessions in the given state.
     public static func withState(_ state: SessionState) -> Predicate<RecordingSession> {
-        #Predicate<RecordingSession> { session in
-            session.state == state
+        let stateValue = state.rawValue
+        return #Predicate<RecordingSession> { session in
+            session.state.rawValue == stateValue
         }
     }
 
@@ -171,6 +172,11 @@ public enum SessionQueries {
 // MARK: - Segment Queries
 
 /// Reusable query components for AudioSegment entities.
+///
+/// Note: TranscriptionState is an enum with associated values, which cannot be
+/// compared directly in SwiftData predicates. Fetch segments using these predicates
+/// and filter in memory using the `TranscriptionState` computed properties
+/// (`isProcessing`, `isWaiting`, `isTerminal`, etc.).
 public enum SegmentQueries {
 
     // MARK: - Predicates
@@ -178,37 +184,6 @@ public enum SegmentQueries {
     /// Predicate for all segments.
     public static var all: Predicate<AudioSegment> {
         #Predicate<AudioSegment> { _ in true }
-    }
-
-    /// Predicate for segments with pending transcription.
-    public static var pending: Predicate<AudioSegment> {
-        #Predicate<AudioSegment> { segment in
-            segment.transcriptionState == TranscriptionState.pending
-        }
-    }
-
-    /// Predicate for segments currently being processed.
-    /// Note: SwiftData predicates can't pattern-match enum cases with associated values.
-    /// This returns all non-pending segments; filter in memory if needed.
-    public static var processing: Predicate<AudioSegment> {
-        #Predicate<AudioSegment> { segment in
-            segment.transcriptionState != TranscriptionState.pending
-        }
-    }
-
-    /// Predicate for segments with completed transcription.
-    /// Note: Filter in memory to distinguish completed from other terminal states.
-    public static var completed: Predicate<AudioSegment> {
-        #Predicate<AudioSegment> { segment in
-            segment.transcriptionState != TranscriptionState.pending
-        }
-    }
-
-    /// Predicate for segments that need processing (pending state).
-    public static var needsProcessing: Predicate<AudioSegment> {
-        #Predicate<AudioSegment> { segment in
-            segment.transcriptionState == TranscriptionState.pending
-        }
     }
 
     // MARK: - Sort Descriptors
