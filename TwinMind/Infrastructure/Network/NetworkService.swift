@@ -6,8 +6,6 @@
 //  Design decision: Wraps URLSession with typed error handling, connectivity monitoring,
 //  and standardized request/response patterns for testability.
 //
-//  Created by Claude Code on 2026-03-04.
-//
 
 import Foundation
 import Network
