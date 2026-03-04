@@ -9,6 +9,7 @@
 
 import Foundation
 import SwiftData
+internal import os
 
 /// Actor managing all SwiftData persistence operations.
 ///
