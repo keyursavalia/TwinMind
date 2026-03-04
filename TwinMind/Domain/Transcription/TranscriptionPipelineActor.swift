@@ -8,6 +8,7 @@
 //
 
 import Foundation
+internal import os
 
 /// Actor managing the transcription pipeline with queuing, retry, and fallback.
 ///
@@ -167,7 +168,7 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
             return
         }
 
-        AppLogger.transcription.notice("Switched service from \(previousService) to \(activeService.serviceIdentifier)")
+        await AppLogger.transcription.notice("Switched service from \(previousService) to \(self.activeService.serviceIdentifier)")
         eventContinuation?.yield(.serviceSwitched(
             from: previousService,
             to: activeService.serviceIdentifier,
@@ -292,7 +293,7 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
     }
 
     private func handleJobFailure(job: SegmentJob, attempt: Int, error: Error) async {
-        let appError = error as? AppError ?? .unknown(description: error.localizedDescription)
+        let appError = error as? AppError ?? .unknown(message: error.localizedDescription)
 
         consecutiveFailureCount += 1
 
@@ -370,7 +371,7 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
         isOnline = isConnected
 
         if wasOnline != isOnline {
-            AppLogger.transcription.info("Connectivity changed: \(isOnline ? "online" : "offline")")
+            AppLogger.transcription.info("Connectivity changed: \(self.isOnline ? "online" : "offline")")
             eventContinuation?.yield(.connectivityChanged(isOnline: isOnline))
 
             if isOnline {
