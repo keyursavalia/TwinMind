@@ -138,7 +138,7 @@ public struct AppleSpeechService: TranscriptionServiceProtocol {
                     let serviceResult = TranscriptionServiceResult(
                         text: transcription.formattedString,
                         confidence: Double(transcription.segments.first?.confidence ?? 0),
-                        language: recognizer.locale?.languageCode,
+                        language: recognizer.locale.languageCode,
                         duration: result.speechRecognitionMetadata?.speechDuration
                     )
 
