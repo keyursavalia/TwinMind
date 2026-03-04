@@ -6,8 +6,6 @@
 //  Design decision: All Keychain queries use kSecAttrService to scope items to this app,
 //  preventing conflicts with other apps and enabling easy cleanup.
 //
-//  Created by Claude Code on 2026-03-04.
-//
 
 import Foundation
 import Security
