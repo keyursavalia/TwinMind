@@ -9,6 +9,7 @@
 
 import Foundation
 import Speech
+internal import os
 
 /// Apple Speech Recognition service for audio transcription.
 ///
