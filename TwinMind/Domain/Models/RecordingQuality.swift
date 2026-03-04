@@ -105,8 +105,8 @@ extension RecordingQuality {
         }
     }
 
-    /// A user-facing description of the quality preset.
-    public var description: String {
+    /// A user-facing description of the quality preset's technical details.
+    public var detailDescription: String {
         switch self {
         case .high:
             return "\(Int(sampleRate / 1000))kHz · \(bitDepth)-bit · ~\(String(format: "%.1f", estimatedMBPerMinute))MB/min"
