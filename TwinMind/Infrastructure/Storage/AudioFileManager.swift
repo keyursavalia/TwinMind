@@ -6,8 +6,6 @@
 //  Design decision: Centralized file path management ensures consistent storage
 //  structure and simplifies cleanup operations.
 //
-//  Created by Claude Code on 2026-03-04.
-//
 
 import Foundation
 
