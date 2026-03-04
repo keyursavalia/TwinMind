@@ -9,6 +9,7 @@
 
 import Foundation
 import AVFAudio
+internal import os
 
 /// Actor managing audio recording with AVAudioEngine and real-time segmentation.
 ///
@@ -401,7 +402,7 @@ public actor AudioEngineActor: AudioEngineProtocol {
             isOutputWireless: outputPort?.portType == .bluetoothHFP || outputPort?.portType == .bluetoothA2DP
         )
 
-        AppLogger.audio.debug("Route updated: \(_currentRoute.inputDisplayString) → \(_currentRoute.outputDisplayString)")
+        AppLogger.audio.debug("Route updated: \(self._currentRoute.inputDisplayString) → \(self._currentRoute.outputDisplayString)")
     }
 
     // MARK: - State Management
