@@ -9,6 +9,7 @@
 
 import Foundation
 import SwiftData
+internal import os
 
 /// Dependency injection container for the TwinMind application.
 ///
