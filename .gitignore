@@ -1,0 +1,265 @@
+# ============================================================
+# VoiceNote — .gitignore
+# Xcode + Swift + iOS + SwiftData + Secrets
+# ============================================================
+
+# ------------------------------------------------------------
+# SECRETS & CREDENTIALS (never commit these)
+# ------------------------------------------------------------
+Secrets.xcconfig
+*.xcconfig.local
+.env
+.env.*
+**/secrets/
+**/*secret*
+**/*Secret*
+**/*apikey*
+**/*APIKey*
+**/*api_key*
+Keychain.plist
+
+# ------------------------------------------------------------
+# XCODE — USER-SPECIFIC
+# ------------------------------------------------------------
+# Per-user Xcode settings and schemes (not shared)
+xcuserdata/
+**/*.xcodeproj/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+
+# Xcode 14+ derived data written inside the project folder
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Build products
+build/
+DerivedData/
+
+# Xcode index (machine-generated, very large)
+Index/
+Index.noindex/
+
+# Playground execution logs
+timeline.xctimeline
+playground.xcworkspace
+
+# Xcode Previews cache
+**/__Previews/
+
+# Xcode Organizer archives (submit via Instruments/Organizer, not git)
+*.xcarchive
+
+# Result bundles from xcodebuild
+*.xcresult
+
+# Xcode crash/diagnostic logs
+*.crash
+
+# ------------------------------------------------------------
+# SWIFT PACKAGE MANAGER
+# ------------------------------------------------------------
+# Resolved file IS committed for apps (reproducible builds)
+# Uncomment the line below only if you want to ignore it
+# Package.resolved
+
+# SPM build artifacts
+.build/
+.swiftpm/
+
+# SPM checkouts (resolved from Package.resolved, not needed in git)
+Packages/
+# NOTE: if using Xcode's built-in SPM, the checkouts live at:
+# *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+
+# ------------------------------------------------------------
+# COCOAPODS (if used alongside SPM)
+# ------------------------------------------------------------
+Pods/
+*.xcworkspace
+!default.xcworkspace
+Podfile.lock
+
+# ------------------------------------------------------------
+# CARTHAGE (if used)
+# ------------------------------------------------------------
+Carthage/Build/
+Carthage/Checkouts/
+
+# ------------------------------------------------------------
+# SWIFTDATA / COREDATA GENERATED FILES
+# ------------------------------------------------------------
+# Generated NSManagedObject subclasses (use codegen=none and write manually)
+**/generated/*.swift
+
+# SQLite files created during testing (never commit test databases)
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ------------------------------------------------------------
+# TEST ARTIFACTS
+# ------------------------------------------------------------
+# XCTest result bundles
+TestResults/
+*.xcresult/
+
+# Code coverage reports
+*.gcda
+*.gcno
+coverage/
+*.lcov
+*.profdata
+*.profraw
+
+# Snapshot test reference images (commit intentionally, not by accident)
+# Uncomment to always ignore; leave commented to allow committing baselines
+# **/__Snapshots__/
+
+# Temporary test audio fixtures generated at runtime
+Tests/**/GeneratedFixtures/
+Tests/**/*.generated.m4a
+Tests/**/*.generated.wav
+
+# ------------------------------------------------------------
+# AUDIO & MEDIA FILES (runtime-generated)
+# ------------------------------------------------------------
+# Recorded audio segments written by the app at runtime
+*.m4a
+*.caf
+*.wav
+*.aac
+*.mp3
+*.opus
+
+# Encrypted audio segment containers written by EncryptionService
+*.enc
+*.voicenote.enc
+
+# Exported session files (generated on demand by ExportService)
+*.srt
+Exports/
+
+# ------------------------------------------------------------
+# DOCUMENTATION BUILD ARTIFACTS
+# ------------------------------------------------------------
+docs/build/
+.docbuild/
+*.doccarchive
+
+# DocC symbol graphs (auto-generated during build)
+*.symbols.json
+
+# jazzy / sourcedocs output
+docs/output/
+
+# ------------------------------------------------------------
+# OS & EDITOR JUNK
+# ------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Thumbnails
+Thumbs.db
+ehthumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains / AppCode
+.idea/
+*.iml
+
+# vim / neovim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*#
+.#*
+\#*#
+
+# TextMate
+*.tmproj
+*.tmproject
+tmtags
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------
+# CI / CD
+# ------------------------------------------------------------
+# Fastlane — commit Fastfile and Appfile, ignore generated/sensitive files
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+fastlane/README.md
+fastlane/.env
+fastlane/.env.*
+
+# GitHub Actions local cache
+.act/
+
+# Bitrise
+bitrise.yml.local
+
+# Provisioning profiles and certificates (managed via CI secrets, not git)
+*.mobileprovision
+*.p12
+*.cer
+*.certSigningRequest
+
+# ------------------------------------------------------------
+# INSTRUMENTS & PROFILING
+# ------------------------------------------------------------
+*.trace
+*.dtps
+profilingdata/
+
+# ------------------------------------------------------------
+# LOCALISATION TOOLING
+# ------------------------------------------------------------
+# Transifex / Crowdin downloads
+*.xliff.tmp
+
+# ------------------------------------------------------------
+# MISC
+# ------------------------------------------------------------
+# Homebrew lock files accidentally placed in project
+Brewfile.lock.json
+
+# Node (if any JS tooling is used e.g. for docs/scripts)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Python (if any scripting is used)
+__pycache__/
+*.pyc
+*.pyo
+.python-version
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+*.log
+tmp/
+temp/
+
+# README.md
+README.md
