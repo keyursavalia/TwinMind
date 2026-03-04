@@ -124,7 +124,7 @@ public enum AppError: Error, Equatable, Sendable, Codable {
     // MARK: - Unknown Errors
 
     /// An unexpected error occurred.
-    case unknown(description: String)
+    case unknown(message: String)
 }
 
 // MARK: - Equatable Conformance
@@ -288,8 +288,8 @@ extension AppError: LocalizedError {
         case .appIntentFailed(let intent, let reason):
             return "App Intent '\(intent)' failed: \(reason)"
 
-        case .unknown(let description):
-            return "An unexpected error occurred: \(description)"
+        case .unknown(let message):
+            return "An unexpected error occurred: \(message)"
         }
     }
 }
