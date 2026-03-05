@@ -48,6 +48,7 @@ public protocol NetworkServiceProtocol: Sendable {
     ///   - fileName: Name for the file field.
     ///   - mimeType: MIME type of the file.
     ///   - additionalFields: Additional form fields to include.
+    ///   - headers: Additional HTTP headers (e.g., Authorization).
     ///   - timeout: Request timeout in seconds (default: 60).
     /// - Returns: The response data and HTTP response.
     /// - Throws: `AppError.networkRequestFailed` on failure.
@@ -57,6 +58,7 @@ public protocol NetworkServiceProtocol: Sendable {
         fileName: String,
         mimeType: String,
         additionalFields: [String: String],
+        headers: [String: String],
         timeout: TimeInterval
     ) async throws -> (Data, HTTPURLResponse)
 
@@ -93,13 +95,14 @@ extension NetworkServiceProtocol {
         try await execute(request: request, decodingTo: type, timeout: 30)
     }
 
-    /// Uploads file with default timeout (60 seconds).
+    /// Uploads file with default timeout (60 seconds) and headers.
     public func uploadFile(
         to url: URL,
         fileURL: URL,
         fileName: String,
         mimeType: String,
-        additionalFields: [String: String] = [:]
+        additionalFields: [String: String] = [:],
+        headers: [String: String] = [:]
     ) async throws -> (Data, HTTPURLResponse) {
         try await uploadFile(
             to: url,
@@ -107,6 +110,7 @@ extension NetworkServiceProtocol {
             fileName: fileName,
             mimeType: mimeType,
             additionalFields: additionalFields,
+            headers: headers,
             timeout: 60
         )
     }
