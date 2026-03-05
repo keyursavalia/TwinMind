@@ -34,14 +34,11 @@ public final class AppDependencies {
 
     // MARK: - Transcription Services
 
-    /// Primary transcription service (Whisper API).
-    public let whisperService: TranscriptionServiceProtocol
+    /// Primary transcription service (Google Gemini).
+    public let geminiService: TranscriptionServiceProtocol
 
     /// Fallback transcription service (Apple STT).
     public let appleSpeechService: TranscriptionServiceProtocol
-
-    /// Local Whisper service (stub).
-    public let localWhisperService: TranscriptionServiceProtocol
 
     // MARK: - SwiftData
 
@@ -77,15 +74,12 @@ public final class AppDependencies {
         self.audioFileManager = AudioFileManager()
 
         // Initialize transcription services
-        let whisperBaseURL = ConfigurationManager.shared.whisperAPIBaseURL()
-        self.whisperService = WhisperAPIService(
+        self.geminiService = GeminiTranscriptionService(
             networkService: networkService,
             keychainService: keychainService,
-            encryptionService: encryptionService,
-            baseURL: whisperBaseURL
+            encryptionService: encryptionService
         )
         self.appleSpeechService = AppleSpeechService(encryptionService: encryptionService)
-        self.localWhisperService = LocalWhisperService(encryptionService: encryptionService)
 
         // Initialize SwiftData
         let schema = Schema([
@@ -111,7 +105,7 @@ public final class AppDependencies {
         self.dataManager = DataManagerActor(modelContainer: modelContainer)
 
         self.transcriptionPipeline = TranscriptionPipelineActor(
-            primaryService: whisperService,
+            primaryService: geminiService,
             fallbackService: appleSpeechService,
             dataManager: dataManager,
             encryptionService: encryptionService,
