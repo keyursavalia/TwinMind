@@ -35,8 +35,26 @@ public final class AudioSegment {
     /// File path to the encrypted audio segment file.
     public var audioFilePath: String
 
+    /// Encoded transcription state data (private storage).
+    private var transcriptionStateData: Data
+
     /// Current transcription processing state.
-    public var transcriptionState: TranscriptionState
+    @Transient
+    public var transcriptionState: TranscriptionState {
+        get {
+            guard let decoded = try? JSONDecoder().decode(TranscriptionState.self, from: transcriptionStateData) else {
+                return .pending
+            }
+            return decoded
+        }
+        set {
+            guard let encoded = try? JSONEncoder().encode(newValue) else {
+                transcriptionStateData = Data()
+                return
+            }
+            transcriptionStateData = encoded
+        }
+    }
 
     /// Timestamp when this segment was created.
     public var createdAt: Date
@@ -78,10 +96,12 @@ public final class AudioSegment {
         self.startOffset = startOffset
         self.durationSeconds = durationSeconds
         self.audioFilePath = audioFilePath
-        self.transcriptionState = transcriptionState
         self.createdAt = createdAt
         self.transcription = transcription
         self.session = session
+
+        // Encode the transcription state
+        self.transcriptionStateData = (try? JSONEncoder().encode(transcriptionState)) ?? Data()
     }
 }
 
