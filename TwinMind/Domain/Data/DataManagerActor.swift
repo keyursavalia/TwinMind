@@ -87,9 +87,30 @@ public actor DataManagerActor: DataManagerProtocol {
     public func updateSession(_ session: RecordingSession) async throws {
         let context = ModelContext(modelContainer)
 
+        // Capture the session ID to use in the predicate
+        let sessionId = session.id
+        let predicate = #Predicate<RecordingSession> { s in
+            s.id == sessionId
+        }
+        let descriptor = FetchDescriptor<RecordingSession>(predicate: predicate)
+
         do {
+            guard let existingSession = try context.fetch(descriptor).first else {
+                throw AppError.dataOperationFailed(
+                    operation: "updateSession",
+                    reason: "Session not found: \(sessionId.uuidString)"
+                )
+            }
+
+            // Update the properties on the tracked object
+            existingSession.endedAt = session.endedAt
+            existingSession.durationSeconds = session.durationSeconds
+            existingSession.state = session.state
+            existingSession.name = session.name
+            existingSession.audioFilePath = session.audioFilePath
+
             try context.save()
-            AppLogger.data.info("Updated session: \(session.id.uuidString)")
+            AppLogger.data.info("Updated session: \(sessionId.uuidString)")
         } catch {
             AppLogger.data.error("Failed to update session", error: error)
             throw AppError.dataOperationFailed(operation: "updateSession", reason: error.localizedDescription)
@@ -171,26 +192,50 @@ public actor DataManagerActor: DataManagerProtocol {
         index: Int,
         startOffset: Double,
         duration: Double,
-        audioFilePath: String
+        audioFilePath: String,
+        id: UUID? = nil
     ) async throws -> AudioSegment {
         let context = ModelContext(modelContainer)
 
-        guard let session = try await fetchSession(id: sessionId) else {
-            throw AppError.recordNotFound(entityType: "RecordingSession", id: sessionId.uuidString)
+        // Capture variables for use in predicate
+        let capturedSessionId = sessionId
+        let segmentId = id ?? UUID()
+
+        // Check if segment already exists (to prevent duplicates)
+        let existingSegmentPredicate = #Predicate<AudioSegment> { seg in
+            seg.id == segmentId
         }
-
-        let segment = AudioSegment(
-            index: index,
-            startOffset: startOffset,
-            durationSeconds: duration,
-            audioFilePath: audioFilePath,
-            session: session
-        )
-
-        context.insert(segment)
+        let existingSegmentDescriptor = FetchDescriptor<AudioSegment>(predicate: existingSegmentPredicate)
 
         do {
+            // Return existing segment if found
+            if let existingSegment = try context.fetch(existingSegmentDescriptor).first {
+                AppLogger.data.debug("Segment \(index) already exists for session: \(sessionId.uuidString)")
+                return existingSegment
+            }
+
+            // Fetch session in THIS context (not from another context)
+            let sessionPredicate = #Predicate<RecordingSession> { s in
+                s.id == capturedSessionId
+            }
+            let sessionDescriptor = FetchDescriptor<RecordingSession>(predicate: sessionPredicate)
+
+            guard let session = try context.fetch(sessionDescriptor).first else {
+                throw AppError.recordNotFound(entityType: "RecordingSession", id: sessionId.uuidString)
+            }
+
+            let segment = AudioSegment(
+                id: segmentId,
+                index: index,
+                startOffset: startOffset,
+                durationSeconds: duration,
+                audioFilePath: audioFilePath,
+                session: session
+            )
+
+            context.insert(segment)
             try context.save()
+
             AppLogger.data.info("Created segment \(index) for session: \(sessionId.uuidString)")
             return segment
         } catch {
@@ -253,25 +298,46 @@ public actor DataManagerActor: DataManagerProtocol {
     ) async throws -> [AudioSegment] {
         let context = ModelContext(modelContainer)
 
-        let predicate = #Predicate<AudioSegment> { segment in
-            segment.session?.id == sessionId
+        // Fetch the session first, then access its segments
+        let sessionPredicate = #Predicate<RecordingSession> { s in
+            s.id == sessionId
         }
-
-        var descriptor = FetchDescriptor<AudioSegment>(
-            predicate: predicate,
-            sortBy: sortDescriptors
+        let sessionDescriptor = FetchDescriptor<RecordingSession>(
+            predicate: sessionPredicate
         )
-        descriptor.relationshipKeyPathsForPrefetching = [\.transcription]
 
         do {
-            let segments = try context.fetch(descriptor)
-            AppLogger.data.debug("Fetched \(segments.count) segments for session: \(sessionId.uuidString)")
+            guard let session = try context.fetch(sessionDescriptor).first else {
+                throw AppError.recordNotFound(entityType: "RecordingSession", id: sessionId.uuidString)
+            }
+
+            // Get segments from the session's relationship
+            let segments = session.segments
+
+            // Sort manually since we can't use FetchDescriptor here
+            let sortedSegments: [AudioSegment]
+            if let firstDescriptor = sortDescriptors.first {
+                sortedSegments = segments.sorted { lhs, rhs in
+                    switch firstDescriptor.order {
+                    case .forward:
+                        return lhs.index < rhs.index
+                    case .reverse:
+                        return lhs.index > rhs.index
+                    }
+                }
+            } else {
+                sortedSegments = segments.sorted { $0.index < $1.index }
+            }
+
+            AppLogger.data.debug("Fetched \(sortedSegments.count) segments for session: \(sessionId.uuidString)")
 
             // Log transcription status for debugging
-            let transcribedCount = segments.filter { $0.transcription != nil }.count
+            let transcribedCount = sortedSegments.filter { $0.transcription != nil }.count
             AppLogger.data.debug("  → \(transcribedCount) segments have transcriptions")
 
-            return segments
+            return sortedSegments
+        } catch let error as AppError {
+            throw error
         } catch {
             AppLogger.data.error("Failed to fetch segments", error: error)
             throw AppError.dataOperationFailed(operation: "fetchSegments", reason: error.localizedDescription)
