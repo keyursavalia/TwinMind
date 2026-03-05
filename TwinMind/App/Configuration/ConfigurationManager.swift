@@ -32,13 +32,12 @@ public final class ConfigurationManager: @unchecked Sendable {
     // MARK: - Configuration Keys
 
     private enum InfoPlistKey {
-        static let whisperAPIKey = "WHISPER_API_KEY"
-        static let whisperAPIBaseURL = "WHISPER_API_BASE_URL"
+        static let geminiAPIKey = "GEMINI_API_KEY"
         static let environment = "ENVIRONMENT"
     }
 
     public enum KeychainKey {
-        public static let whisperAPIKey = "com.twinmind.whisper.apikey"
+        public static let geminiAPIKey = "com.twinmind.gemini.apikey"
         public static let encryptionKey = "com.twinmind.encryption.key"
     }
 
@@ -61,21 +60,21 @@ public final class ConfigurationManager: @unchecked Sendable {
 
         AppLogger.general.info("Initializing configuration")
 
-        // Read Whisper API key from Info.plist
-        if let whisperAPIKey = infoPlistString(forKey: InfoPlistKey.whisperAPIKey),
-           !whisperAPIKey.isEmpty,
-           whisperAPIKey != "YOUR_WHISPER_API_KEY_HERE" {
+        // Read Gemini API key from Info.plist
+        if let geminiAPIKey = infoPlistString(forKey: InfoPlistKey.geminiAPIKey),
+           !geminiAPIKey.isEmpty,
+           geminiAPIKey != "YOUR_GEMINI_API_KEY_HERE" {
             // Store in Keychain if not already present
-            if !keychainService.exists(forKey: KeychainKey.whisperAPIKey) {
+            if !keychainService.exists(forKey: KeychainKey.geminiAPIKey) {
                 try keychainService.store(
-                    whisperAPIKey,
-                    forKey: KeychainKey.whisperAPIKey,
+                    geminiAPIKey,
+                    forKey: KeychainKey.geminiAPIKey,
                     accessibility: .afterFirstUnlockThisDeviceOnly
                 )
-                AppLogger.general.info("Whisper API key stored in Keychain")
+                AppLogger.general.info("Gemini API key stored in Keychain")
             }
         } else {
-            AppLogger.general.warning("Whisper API key not configured in Info.plist")
+            AppLogger.general.warning("Gemini API key not configured in Info.plist")
         }
 
         // Initialize encryption key if needed
@@ -87,19 +86,6 @@ public final class ConfigurationManager: @unchecked Sendable {
 
         isInitialized = true
         AppLogger.general.info("Configuration initialized successfully")
-    }
-
-    /// Gets the Whisper API base URL.
-    ///
-    /// - Returns: The base URL, or the default OpenAI endpoint.
-    public func whisperAPIBaseURL() -> URL {
-        if let urlString = infoPlistString(forKey: InfoPlistKey.whisperAPIBaseURL),
-           let url = URL(string: urlString) {
-            return url
-        }
-
-        // Default to OpenAI
-        return URL(string: "https://api.openai.com/v1")!
     }
 
     /// Gets the current environment.
