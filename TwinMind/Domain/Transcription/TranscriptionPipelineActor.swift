@@ -106,6 +106,22 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
     public func submitJob(_ job: SegmentJob) async {
         AppLogger.transcription.info("Submitting job for segment \(job.segmentIndex) of session \(job.sessionId.uuidString)")
 
+        // Create the AudioSegment record in the database if it doesn't exist
+        do {
+            _ = try await dataManager.createSegment(
+                sessionId: job.sessionId,
+                index: job.segmentIndex,
+                startOffset: job.startOffset,
+                duration: job.duration,
+                audioFilePath: job.encryptedFilePath,
+                id: job.id
+            )
+            AppLogger.transcription.info("Created segment record for segment \(job.segmentIndex)")
+        } catch {
+            // If segment already exists, that's fine - continue
+            AppLogger.transcription.debug("Segment may already exist: \(error.localizedDescription)")
+        }
+
         jobQueue.append(job)
         eventContinuation?.yield(.jobQueued(job))
 
@@ -186,21 +202,39 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
     // MARK: - Processing
 
     private func ensureProcessing() {
-        // Start processing task if not already running
-        if processingTask == nil || processingTask?.isCancelled == true {
+        // Start processing task if not already running or if it has finished
+        if processingTask == nil {
+            processingTask = Task {
+                await processQueue()
+            }
+        } else if let task = processingTask, task.isCancelled {
             processingTask = Task {
                 await processQueue()
             }
         }
+        // If task exists and is still running, do nothing - it will pick up new jobs
     }
 
     private func processQueue() async {
-        while !jobQueue.isEmpty {
+        // Keep processing loop running - don't exit when queue is temporarily empty
+        while true {
+            // Exit only if explicitly cancelled
+            if Task.isCancelled {
+                break
+            }
+
+            // Check if there are jobs to process
+            guard !jobQueue.isEmpty else {
+                // Queue is empty, wait a bit before checking again
+                try? await Task.sleep(for: .seconds(0.5))
+                continue
+            }
+
             // Get jobs to process (up to max concurrent)
             let availableSlots = maxConcurrentJobs - processingJobs.count
             guard availableSlots > 0 else {
-                // Wait a bit and check again
-                try? await Task.sleep(for: .seconds(1))
+                // All slots busy, wait a bit and check again
+                try? await Task.sleep(for: .seconds(0.5))
                 continue
             }
 
@@ -209,7 +243,8 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
             }
 
             guard !jobsToProcess.isEmpty else {
-                try? await Task.sleep(for: .seconds(1))
+                // No eligible jobs right now, wait and retry
+                try? await Task.sleep(for: .seconds(0.5))
                 continue
             }
 
@@ -221,6 +256,9 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
                     }
                 }
             }
+
+            // Small delay before next iteration to avoid tight loop
+            try? await Task.sleep(for: .milliseconds(100))
         }
     }
 
