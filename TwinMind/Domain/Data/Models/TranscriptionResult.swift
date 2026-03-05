@@ -50,7 +50,7 @@ public final class TranscriptionResult {
     ///   - text: The transcribed text.
     ///   - confidence: Optional confidence score (0.0 to 1.0).
     ///   - language: Optional language code.
-    ///   - modelUsed: The service/model identifier (e.g., "whisper-api", "apple-stt").
+    ///   - modelUsed: The service/model identifier (e.g., "gemini-api", "apple-stt").
     ///   - processedAt: Processing timestamp (defaults to now).
     ///   - segment: Parent audio segment.
     public init(
@@ -79,12 +79,10 @@ extension TranscriptionResult {
     /// User-facing display name for the model used.
     public var modelDisplayName: String {
         switch modelUsed {
-        case "whisper-api":
-            return "Whisper API"
+        case "gemini-api":
+            return "Google Gemini"
         case "apple-stt":
             return "Apple Speech Recognition"
-        case "local-whisper":
-            return "Local Whisper"
         default:
             return modelUsed.capitalized
         }
