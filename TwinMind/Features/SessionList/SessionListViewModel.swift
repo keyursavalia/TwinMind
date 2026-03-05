@@ -43,6 +43,11 @@ public final class SessionListViewModel {
 
     public let dataManager: any DataManagerProtocol
 
+    // MARK: - Private State
+
+    /// Timer for auto-refreshing while transcriptions are in progress.
+    private var refreshTask: Task<Void, Never>?
+
     // MARK: - Initialization
 
     /// Creates a new session list view model.
@@ -80,6 +85,9 @@ public final class SessionListViewModel {
 
                 AppLogger.ui.info("Loaded \(self.sessions.count) sessions")
 
+                // Start auto-refresh if there are pending transcriptions
+                startAutoRefresh()
+
             } catch {
                 handleError(error)
             }
@@ -107,6 +115,51 @@ public final class SessionListViewModel {
     public func dismissError() {
         showErrorBanner = false
         currentError = nil
+    }
+
+    /// Starts auto-refresh to update transcription progress.
+    public func startAutoRefresh() {
+        // Cancel any existing refresh task
+        refreshTask?.cancel()
+
+        // Check if there are any pending transcriptions
+        let hasPendingTranscriptions = sessions.contains { session in
+            session.transcriptionProgress < 1.0 && session.segmentCount > 0
+        }
+
+        guard hasPendingTranscriptions else {
+            AppLogger.ui.debug("No pending transcriptions, skipping auto-refresh")
+            return
+        }
+
+        AppLogger.ui.info("Starting auto-refresh for transcription updates")
+
+        refreshTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(3))
+
+                guard !Task.isCancelled else { break }
+
+                // Reload sessions to get updated transcription counts
+                loadSessions()
+
+                // Stop auto-refresh if all transcriptions are complete
+                let stillPending = sessions.contains { session in
+                    session.transcriptionProgress < 1.0 && session.segmentCount > 0
+                }
+
+                if !stillPending {
+                    AppLogger.ui.info("All transcriptions complete, stopping auto-refresh")
+                    break
+                }
+            }
+        }
+    }
+
+    /// Stops auto-refresh.
+    public func stopAutoRefresh() {
+        refreshTask?.cancel()
+        refreshTask = nil
     }
 
     // MARK: - Private Helpers
