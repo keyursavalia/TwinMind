@@ -87,20 +87,16 @@ private struct ErrorView: View {
 
 // MARK: - RootPlaceholderView
 
-/// Temporary root view used while rebuilding the TwinMind UI.
+/// Root view providing the main navigation interface.
 private struct RootPlaceholderView: View {
     let dependencies: AppDependencies
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("TwinMind backend is initialized.")
-                .font(.headline)
-
-            Text("Implement the new UI using existing ViewModels and domain actors.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
+        SessionListView(
+            viewModel: SessionListViewModel(
+                dataManager: dependencies.dataManager
+            ),
+            dependencies: dependencies
+        )
     }
 }
