@@ -3,7 +3,7 @@
 //  TwinMind
 //
 //  Purpose: Protocol defining the contract for transcription service implementations.
-//  Design decision: Multiple conforming types (Whisper API, Apple STT, local Whisper)
+//  Design decision: Multiple conforming types (Gemini API, Apple STT)
 //  enable fallback strategy and swappable backends.
 //
 
@@ -12,18 +12,17 @@ import Foundation
 /// Protocol defining the interface for audio transcription services.
 ///
 /// Conforming types handle the actual transcription of audio files,
-/// whether via remote API (Whisper), on-device framework (Apple Speech),
-/// or local model (Whisper GGML).
+/// whether via remote API (Gemini) or on-device framework (Apple Speech).
 public protocol TranscriptionServiceProtocol: Sendable {
 
     /// The unique identifier for this transcription service.
     ///
-    /// Examples: "whisper-api", "apple-stt", "local-whisper"
+    /// Examples: "gemini-api", "apple-stt"
     var serviceIdentifier: String { get }
 
     /// The display name for this service (user-facing).
     ///
-    /// Examples: "Whisper API", "Apple Speech Recognition", "Local Whisper"
+    /// Examples: "Google Gemini", "Apple Speech Recognition"
     var displayName: String { get }
 
     /// Whether this service requires an internet connection.
