@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Active Recording Screen</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#007aff",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1923",
+                    },
+                    fontFamily: {
+                        "display": ["-apple-system", "BlinkMacSystemFont", "San Francisco", "Helvetica Neue", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 flex justify-center min-h-screen">
+<div class="relative w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-none overflow-x-hidden flex flex-col justify-between pt-12 pb-8">
+<div class="flex flex-col px-4">
+<div class="flex items-center justify-between">
+<button class="text-primary flex items-center justify-center py-2 pr-4 transition-colors">
+<span class="text-lg font-normal">Dismiss</span>
+</button>
+<div class="flex-1 flex flex-col items-center justify-center">
+<input class="w-full bg-transparent border-none focus:ring-0 text-lg font-semibold text-center placeholder-slate-400 dark:placeholder-slate-500 py-1 text-slate-900 dark:text-slate-100" placeholder="Session Name" type="text" value="Client Interview"/>
+<div class="flex items-center gap-1 text-slate-500 text-xs mt-1">
+<span class="material-symbols-outlined text-[14px]">headphones</span>
+<span>AirPods Pro</span>
+</div>
+</div>
+<div class="w-[70px]"></div> 
+</div>
+</div>
+<div class="flex flex-col items-center justify-center flex-1 px-8 gap-12">
+<div class="text-[64px] font-thin tracking-widest text-slate-900 dark:text-white tabular-nums">
+      00:12:45
+    </div>
+<div class="w-full h-12 flex items-center justify-center gap-1">
+<div class="w-1.5 h-3 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-6 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-8 bg-primary rounded-full"></div>
+<div class="w-1.5 h-12 bg-primary rounded-full"></div>
+<div class="w-1.5 h-10 bg-primary rounded-full"></div>
+<div class="w-1.5 h-5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-7 bg-primary rounded-full"></div>
+<div class="w-1.5 h-4 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-9 bg-primary rounded-full"></div>
+<div class="w-1.5 h-11 bg-primary rounded-full"></div>
+<div class="w-1.5 h-8 bg-primary rounded-full"></div>
+<div class="w-1.5 h-4 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-2 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+</div>
+</div>
+<div class="flex flex-col items-center px-6 gap-8">
+<div class="flex items-center justify-center gap-8 w-full">
+<button class="w-16 h-16 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors">
+<span class="material-symbols-outlined text-[32px]">pause</span>
+</button>
+<button class="w-20 h-20 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-slate-50 dark:bg-slate-800 transition-colors">
+<div class="w-8 h-8 bg-red-500 rounded-sm"></div>
+</button>
+<div class="relative w-16 h-16 rounded-full border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors cursor-pointer">
+<span class="text-xs font-semibold">High</span>
+<span class="text-[10px] text-slate-500">Quality</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-red-500 mt-4">
+<div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+<span class="text-sm font-medium uppercase tracking-widest">Recording...</span>
+</div>
+</div>
+</div>
+
+</body></html>
