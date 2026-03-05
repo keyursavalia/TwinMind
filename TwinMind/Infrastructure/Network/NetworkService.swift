@@ -110,6 +110,7 @@ public final class NetworkService: NetworkServiceProtocol, @unchecked Sendable {
         fileName: String,
         mimeType: String,
         additionalFields: [String: String] = [:],
+        headers: [String: String] = [:],
         timeout: TimeInterval = 60
     ) async throws -> (Data, HTTPURLResponse) {
         // Create multipart form data
@@ -140,6 +141,12 @@ public final class NetworkService: NetworkServiceProtocol, @unchecked Sendable {
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.setValue("\(body.count)", forHTTPHeaderField: "Content-Length")
+
+        // Add custom headers (e.g., Authorization)
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
         request.httpBody = body
         request.timeoutInterval = timeout
 
