@@ -126,7 +126,7 @@ public protocol DataManagerProtocol: Actor {
     ///   - text: Transcribed text.
     ///   - confidence: Optional confidence score.
     ///   - language: Optional language code.
-    ///   - modelUsed: Service identifier (e.g., "whisper-api").
+    ///   - modelUsed: Service identifier (e.g., "gemini-api").
     /// - Returns: The created `TranscriptionResult`.
     /// - Throws: `AppError.dataOperationFailed` if creation fails.
     func createTranscriptionResult(
