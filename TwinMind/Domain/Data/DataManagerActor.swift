@@ -128,10 +128,17 @@ public actor DataManagerActor: DataManagerProtocol {
         )
         descriptor.fetchLimit = limit
         descriptor.fetchOffset = offset
+        descriptor.relationshipKeyPathsForPrefetching = [\.segments]
 
         do {
             let sessions = try context.fetch(descriptor)
             AppLogger.data.debug("Fetched \(sessions.count) sessions (limit: \(limit), offset: \(offset))")
+
+            // Log segment counts for debugging
+            for session in sessions {
+                AppLogger.data.debug("Session \(session.name): \(session.segments.count) segments, duration: \(session.durationSeconds)s")
+            }
+
             return sessions
         } catch {
             AppLogger.data.error("Failed to fetch sessions", error: error)
@@ -250,14 +257,20 @@ public actor DataManagerActor: DataManagerProtocol {
             segment.session?.id == sessionId
         }
 
-        let descriptor = FetchDescriptor<AudioSegment>(
+        var descriptor = FetchDescriptor<AudioSegment>(
             predicate: predicate,
             sortBy: sortDescriptors
         )
+        descriptor.relationshipKeyPathsForPrefetching = [\.transcription]
 
         do {
             let segments = try context.fetch(descriptor)
             AppLogger.data.debug("Fetched \(segments.count) segments for session: \(sessionId.uuidString)")
+
+            // Log transcription status for debugging
+            let transcribedCount = segments.filter { $0.transcription != nil }.count
+            AppLogger.data.debug("  → \(transcribedCount) segments have transcriptions")
+
             return segments
         } catch {
             AppLogger.data.error("Failed to fetch segments", error: error)
