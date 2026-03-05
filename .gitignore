@@ -19,6 +19,7 @@ Secrets.xcconfig
 Keychain.plist
 # Info.plist contains API keys - don't commit
 TwinMind/Info.plist
+**/Info.plist
 
 # ------------------------------------------------------------
 # XCODE — USER-SPECIFIC
