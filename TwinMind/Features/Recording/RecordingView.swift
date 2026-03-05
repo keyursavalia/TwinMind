@@ -278,7 +278,7 @@ private actor MockTranscriptionPipeline: TranscriptionPipelineProtocol {
     var eventStream: AsyncStream<TranscriptionPipelineEvent> { AsyncStream { _ in } }
     var queuedJobCount: Int { 0 }
     var processingJobCount: Int { 0 }
-    var activeServiceIdentifier: String { "whisper-api" }
+    var activeServiceIdentifier: String { "gemini-api" }
     func submitJob(_ job: SegmentJob) async {}
     func cancelJob(segmentId: UUID) async {}
     func drainOfflineQueue() async {}
