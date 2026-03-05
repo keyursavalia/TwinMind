@@ -3,7 +3,7 @@
 //  TwinMind
 //
 //  Purpose: Google Gemini API transcription service implementation.
-//  Design decision: Uses Gemini 2.5 Flash Lite multimodal model for audio transcription.
+//  Design decision: Uses Gemini Flash model for audio transcription.
 //  Audio is sent as base64-encoded inline data for simplicity.
 //
 
@@ -12,18 +12,17 @@ internal import os
 
 /// Google Gemini API transcription service.
 ///
-/// This service uses Google's Gemini 2.5 Flash Lite model to transcribe audio.
+/// This service uses Google's Gemini model to transcribe audio.
 /// Audio files are sent as base64-encoded inline data in the request.
 public actor GeminiTranscriptionService: TranscriptionServiceProtocol {
 
     // MARK: - Properties
 
-    private let baseURL: URL
-    private let modelName: String
     private let networkService: any NetworkServiceProtocol
     private let keychainService: any KeychainServiceProtocol
     private let encryptionService: any EncryptionServiceProtocol
     private let apiKeyIdentifier = "com.twinmind.gemini.apikey"
+    private let modelName: String
 
     // MARK: - Initialization
 
@@ -33,19 +32,16 @@ public actor GeminiTranscriptionService: TranscriptionServiceProtocol {
     ///   - networkService: The network service for API requests.
     ///   - keychainService: The keychain service for API key retrieval.
     ///   - encryptionService: The encryption service for decrypting audio files.
-    ///   - baseURL: The Gemini API base URL (defaults to production endpoint).
-    ///   - modelName: The Gemini model to use (defaults to gemini-2.5-flash-lite).
+    ///   - modelName: The Gemini model to use (defaults to gemini-1.5-flash).
     public init(
         networkService: any NetworkServiceProtocol,
         keychainService: any KeychainServiceProtocol,
         encryptionService: any EncryptionServiceProtocol,
-        baseURL: URL = URL(string: "https://generativelanguage.googleapis.com/v1beta")!,
-        modelName: String = "gemini-2.5-flash-lite"
+        modelName: String = "gemini-1.5-flash"
     ) {
         self.networkService = networkService
         self.keychainService = keychainService
         self.encryptionService = encryptionService
-        self.baseURL = baseURL
         self.modelName = modelName
     }
 
@@ -114,27 +110,23 @@ public actor GeminiTranscriptionService: TranscriptionServiceProtocol {
         let audioData = try Data(contentsOf: audioFileURL)
         let base64Audio = audioData.base64EncodedString()
 
-        // Determine MIME type from file extension
+        // Determine MIME type
         let mimeType: String
         switch audioFileURL.pathExtension.lowercased() {
         case "m4a":
-            mimeType = "audio/m4a"
+            mimeType = "audio/mp4"
         case "mp3":
             mimeType = "audio/mp3"
         case "wav":
             mimeType = "audio/wav"
         default:
-            mimeType = "audio/m4a"
+            mimeType = "audio/mp4"
         }
 
-        // Prepare request
-        let endpoint = baseURL
-            .appendingPathComponent("models/\(modelName):generateContent")
+        // Build Gemini API URL correctly
+        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(modelName):generateContent?key=\(apiKey)"
 
-        var urlComponents = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)!
-        urlComponents.queryItems = [URLQueryItem(name: "key", value: apiKey)]
-
-        guard let requestURL = urlComponents.url else {
+        guard let requestURL = URL(string: urlString) else {
             throw AppError.invalidConfiguration(key: "gemini-endpoint", reason: "Invalid URL")
         }
 
@@ -144,13 +136,14 @@ public actor GeminiTranscriptionService: TranscriptionServiceProtocol {
                 GeminiContent(
                     parts: [
                         GeminiPart(inlineData: GeminiInlineData(mimeType: mimeType, data: base64Audio)),
-                        GeminiPart(text: "Transcribe this audio exactly as spoken. Provide only the transcription without any additional commentary.")
+                        GeminiPart(text: "Transcribe this audio exactly as spoken. Provide only the transcription text without any additional commentary or formatting.")
                     ]
                 )
             ]
         )
 
-        let requestData = try JSONEncoder().encode(requestBody)
+        let encoder = JSONEncoder()
+        let requestData = try encoder.encode(requestBody)
 
         // Create URLRequest
         var request = URLRequest(url: requestURL)
@@ -160,10 +153,14 @@ public actor GeminiTranscriptionService: TranscriptionServiceProtocol {
 
         // Send request
         do {
-            let (data, _) = try await networkService.execute(request: request, timeout: 120)
+            let (data, response) = try await networkService.execute(request: request, timeout: 120)
+
+            // Log response for debugging
+            AppLogger.transcription.debug("Gemini API response status: \(response.statusCode)")
 
             // Decode response
-            let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+            let decoder = JSONDecoder()
+            let geminiResponse = try decoder.decode(GeminiResponse.self, from: data)
 
             // Extract transcription text
             guard let candidate = geminiResponse.candidates.first,
