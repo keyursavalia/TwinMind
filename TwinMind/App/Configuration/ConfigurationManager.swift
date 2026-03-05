@@ -63,18 +63,26 @@ public final class ConfigurationManager: @unchecked Sendable {
         // Read Gemini API key from Info.plist
         if let geminiAPIKey = infoPlistString(forKey: InfoPlistKey.geminiAPIKey),
            !geminiAPIKey.isEmpty,
-           geminiAPIKey != "YOUR_GEMINI_API_KEY_HERE" {
-            // Store in Keychain if not already present
-            if !keychainService.exists(forKey: KeychainKey.geminiAPIKey) {
+           geminiAPIKey != "YOUR_GEMINI_API_KEY_HERE",
+           geminiAPIKey != "YOUR_NEW_API_KEY_HERE",
+           geminiAPIKey != "GET_YOUR_KEY_FROM_https://makersuite.google.com/app/apikey" {
+
+            // Check if the key in Keychain is different from Info.plist
+            let existingKey = try? keychainService.retrieveString(forKey: KeychainKey.geminiAPIKey)
+
+            if existingKey != geminiAPIKey {
+                // Update or store the new key
                 try keychainService.store(
                     geminiAPIKey,
                     forKey: KeychainKey.geminiAPIKey,
                     accessibility: .afterFirstUnlockThisDeviceOnly
                 )
-                AppLogger.general.info("Gemini API key stored in Keychain")
+                AppLogger.general.info("✅ Gemini API key updated in Keychain (was: \(existingKey == nil ? "missing" : "different"))")
+            } else {
+                AppLogger.general.info("✓ Gemini API key already up-to-date in Keychain")
             }
         } else {
-            AppLogger.general.warning("Gemini API key not configured in Info.plist")
+            AppLogger.general.warning("⚠️ Gemini API key not configured in Info.plist")
         }
 
         // Initialize encryption key if needed
