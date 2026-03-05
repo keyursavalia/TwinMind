@@ -62,7 +62,7 @@ public actor TranscriptionPipelineActor: TranscriptionPipelineProtocol {
     /// Creates a new transcription pipeline actor.
     ///
     /// - Parameters:
-    ///   - primaryService: The primary transcription service (Whisper API).
+    ///   - primaryService: The primary transcription service (Gemini API).
     ///   - fallbackService: The fallback transcription service (Apple STT).
     ///   - dataManager: The data manager for persistence.
     ///   - encryptionService: The encryption service.
