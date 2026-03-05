@@ -21,11 +21,12 @@ struct TwinMindApp: App {
         WindowGroup {
             Group {
                 if let dependencies = dependencies {
-                    ContentView(dependencies: dependencies)
+                    RootPlaceholderView(dependencies: dependencies)
                 } else if let error = initializationError {
                     ErrorView(error: error)
                 } else {
-                    LoadingStateView.fullScreen(message: "Initializing...")
+                    ProgressView("Initializing...")
+                        .padding()
                 }
             }
             .task {
@@ -79,6 +80,26 @@ private struct ErrorView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.red)
+        }
+        .padding()
+    }
+}
+
+// MARK: - RootPlaceholderView
+
+/// Temporary root view used while rebuilding the TwinMind UI.
+private struct RootPlaceholderView: View {
+    let dependencies: AppDependencies
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("TwinMind backend is initialized.")
+                .font(.headline)
+
+            Text("Implement the new UI using existing ViewModels and domain actors.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding()
     }
