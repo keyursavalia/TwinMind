@@ -3,7 +3,7 @@
 //  TwinMind
 //
 //  Purpose: Apple Speech framework integration for on-device transcription.
-//  Design decision: Fallback service that works offline, lower accuracy than Whisper.
+//  Design decision: Fallback service that works offline, lower accuracy than Gemini.
 //  Requires speech recognition permission from the user.
 //
 
@@ -14,7 +14,7 @@ internal import os
 /// Apple Speech Recognition service for audio transcription.
 ///
 /// This service uses SFSpeechRecognizer for on-device or server-based transcription,
-/// serving as a fallback when Whisper API is unavailable.
+/// serving as a fallback when Gemini API is unavailable.
 public struct AppleSpeechService: TranscriptionServiceProtocol {
 
     // MARK: - Properties
