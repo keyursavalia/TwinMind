@@ -162,7 +162,11 @@ public actor AudioEngineActor: AudioEngineProtocol {
 
         AppLogger.audio.info("Stopping recording")
 
-        // Flush final segment
+        // Stop engine and remove tap FIRST (prevents new buffers)
+        audioEngine.inputNode.removeTap(onBus: 0)
+        audioEngine.stop()
+
+        // NOW finalize segment (close and encrypt file)
         if let writer = segmentWriter {
             try await writer.finalize(
                 sessionId: currentSessionId!,
@@ -172,10 +176,6 @@ public actor AudioEngineActor: AudioEngineProtocol {
                 emitSegmentReady(job)
             }
         }
-
-        // Stop engine
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioEngine.stop()
 
         // Clean up
         segmentWriter = nil
