@@ -73,6 +73,7 @@ public protocol DataManagerProtocol: Actor {
     ///   - startOffset: Start time from session start (seconds).
     ///   - duration: Segment duration (seconds).
     ///   - audioFilePath: Path to the encrypted audio file.
+    ///   - id: Optional segment ID (defaults to new UUID if not provided).
     /// - Returns: The created `AudioSegment`.
     /// - Throws: `AppError.dataOperationFailed` if creation fails.
     func createSegment(
@@ -80,7 +81,8 @@ public protocol DataManagerProtocol: Actor {
         index: Int,
         startOffset: Double,
         duration: Double,
-        audioFilePath: String
+        audioFilePath: String,
+        id: UUID?
     ) async throws -> AudioSegment
 
     /// Batch inserts multiple audio segments.
