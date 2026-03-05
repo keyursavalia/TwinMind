@@ -9,6 +9,7 @@
 
 import Foundation
 import Network
+internal import os
 
 /// Concrete implementation of HTTP network operations using URLSession.
 ///
@@ -69,9 +70,15 @@ public final class NetworkService: NetworkServiceProtocol, @unchecked Sendable {
 
             // Check for HTTP errors
             guard (200...299).contains(httpResponse.statusCode) else {
+                // Try to get detailed error message from response body
+                var reason = HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+                if let errorString = String(data: data, encoding: .utf8), !errorString.isEmpty {
+                    AppLogger.network.error("API Error Response (\(httpResponse.statusCode)): \(errorString)")
+                    reason = errorString
+                }
                 throw AppError.networkRequestFailed(
                     statusCode: httpResponse.statusCode,
-                    reason: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+                    reason: reason
                 )
             }
 
