@@ -35,11 +35,15 @@ struct ContentView: View {
                 Label("Record", systemImage: "mic.fill")
             }
 
-            // Sessions tab (placeholder)
-            SessionsPlaceholderView()
-                .tabItem {
-                    Label("Sessions", systemImage: "list.bullet")
-                }
+            // Sessions tab
+            SessionListView(
+                viewModel: SessionListViewModel(
+                    dataManager: dependencies.dataManager
+                )
+            )
+            .tabItem {
+                Label("Sessions", systemImage: "list.bullet")
+            }
 
             // Settings tab (placeholder)
             SettingsPlaceholderView()
@@ -51,18 +55,6 @@ struct ContentView: View {
 }
 
 // MARK: - Placeholder Views
-
-/// Placeholder for sessions list view.
-private struct SessionsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            EmptyStateView.noSessions {
-                // Navigate to recording tab
-            }
-            .navigationTitle("Sessions")
-        }
-    }
-}
 
 /// Placeholder for settings view.
 private struct SettingsPlaceholderView: View {
