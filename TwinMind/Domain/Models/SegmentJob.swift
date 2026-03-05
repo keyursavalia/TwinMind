@@ -43,7 +43,7 @@ public struct SegmentJob: Sendable, Equatable, Identifiable {
     /// The number of times this job has been attempted (0 for new jobs).
     public let attemptCount: Int
 
-    /// The preferred transcription service to use (e.g., "whisper-api", "apple-stt").
+    /// The preferred transcription service to use (e.g., "gemini-api", "apple-stt").
     public let preferredService: String?
 
     /// Creates a new segment job.
