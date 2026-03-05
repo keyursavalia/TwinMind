@@ -131,7 +131,7 @@ public struct WhisperAPIService: TranscriptionServiceProtocol {
             fields["language"] = language
         }
 
-        // Upload file
+        // Upload file with Authorization header
         do {
             let (data, response) = try await networkService.uploadFile(
                 to: endpoint,
@@ -139,6 +139,7 @@ public struct WhisperAPIService: TranscriptionServiceProtocol {
                 fileName: "audio.m4a",
                 mimeType: "audio/m4a",
                 additionalFields: fields,
+                headers: ["Authorization": "Bearer \(apiKey)"],
                 timeout: 120
             )
 
