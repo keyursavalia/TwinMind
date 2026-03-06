@@ -40,6 +40,28 @@
 
 ---
 
+## 📸 App Preview
+
+<p align="center">
+  <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.09.png" width="250" alt="Session List - Empty State">
+  <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.24.png" width="250" alt="Session List - Sort Options">
+  <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.37.png" width="250" alt="Pre-Recording Setup">
+</p>
+
+<p align="center">
+  <em>Left to Right: Session List with search · Sort options (Newest/Oldest/Name/Duration) · Pre-recording quality selection (High/Medium/Low)</em>
+</p>
+
+<p align="center">
+  <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.47.png" width="250" alt="Active Recording">
+</p>
+
+<p align="center">
+  <em>Active recording with live timer, audio level meter, and real-time transcription display</em>
+</p>
+
+---
+
 ## 🏗️ Architecture
 
 The app follows a **strict layered, actor-isolated architecture** based on Swift 6 concurrency:
