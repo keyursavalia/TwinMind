@@ -98,14 +98,20 @@ public final class SessionListViewModel {
     ///
     /// - Parameter session: The session to delete.
     public func deleteSession(_ session: RecordingSession) {
+        // Optimistically remove from local array for immediate UI feedback
+        sessions.removeAll { $0.id == session.id }
+
         Task {
             do {
                 try await dataManager.deleteSession(id: session.id)
-                await loadSessions() // Refresh list
-
                 AppLogger.ui.info("Deleted session: \(session.id)")
 
+                // Refresh to ensure consistency
+                await loadSessions()
+
             } catch {
+                // On error, reload to restore the session
+                await loadSessions()
                 handleError(error)
             }
         }
