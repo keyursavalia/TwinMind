@@ -11,6 +11,27 @@ import Foundation
 import Observation
 internal import os
 
+// MARK: - TranscriptionSegment
+
+/// A transcription segment for display in the recording view.
+public struct TranscriptionSegment: Identifiable, Equatable {
+    public let id: UUID
+    public let index: Int
+    public let text: String
+    public let confidence: Double?
+    public let timestamp: Date
+
+    public init(id: UUID, index: Int, text: String, confidence: Double?, timestamp: Date) {
+        self.id = id
+        self.index = index
+        self.text = text
+        self.confidence = confidence
+        self.timestamp = timestamp
+    }
+}
+
+// MARK: - RecordingViewModel
+
 /// ViewModel managing the recording screen state and user interactions.
 ///
 /// This view model coordinates between the UI and the AudioEngineActor,
@@ -45,6 +66,12 @@ public final class RecordingViewModel {
     /// Selected recording quality.
     public var selectedQuality: RecordingQuality = .medium
 
+    /// Live transcription segments as they complete.
+    public var transcriptionSegments: [TranscriptionSegment] = []
+
+    /// Total segment count for progress tracking.
+    public var totalSegmentCount: Int = 0
+
     // MARK: - Dependencies
 
     private let audioEngine: any AudioEngineProtocol
@@ -54,6 +81,7 @@ public final class RecordingViewModel {
     // MARK: - Private State
 
     private var eventStreamTask: Task<Void, Never>?
+    private var transcriptionEventTask: Task<Void, Never>?
     private var timerTask: Task<Void, Never>?
     private var currentSessionId: UUID?
     private var recordingStartTime: Date?
@@ -78,19 +106,27 @@ public final class RecordingViewModel {
 
     // MARK: - Lifecycle
 
-    /// Starts observing audio engine events.
+    /// Starts observing audio engine and transcription events.
     public func startObserving() {
         eventStreamTask = Task { @MainActor in
             for await event in await audioEngine.eventStream {
                 handleAudioEvent(event)
             }
         }
+
+        transcriptionEventTask = Task { @MainActor in
+            for await event in await transcriptionPipeline.eventStream {
+                handleTranscriptionEvent(event)
+            }
+        }
     }
 
-    /// Stops observing audio engine events.
+    /// Stops observing events.
     public func stopObserving() {
         eventStreamTask?.cancel()
         eventStreamTask = nil
+        transcriptionEventTask?.cancel()
+        transcriptionEventTask = nil
         timerTask?.cancel()
         timerTask = nil
     }
@@ -105,6 +141,10 @@ public final class RecordingViewModel {
                 if sessionName.isEmpty {
                     sessionName = "Recording \(Date().formattedDateTime)"
                 }
+
+                // Reset transcription state
+                transcriptionSegments = []
+                totalSegmentCount = 0
 
                 // Create session in database
                 currentSessionId = UUID()
@@ -217,6 +257,9 @@ public final class RecordingViewModel {
             recordingState = state
 
         case .segmentReady(let job):
+            // Increment total segment count
+            totalSegmentCount += 1
+
             // Submit to transcription pipeline
             Task {
                 await transcriptionPipeline.submitJob(job)
@@ -233,6 +276,39 @@ public final class RecordingViewModel {
 
         case .interrupted, .interruptionEnded, .configurationChanged:
             // These are logged but don't require UI action
+            break
+        }
+    }
+
+    private func handleTranscriptionEvent(_ event: TranscriptionPipelineEvent) {
+        switch event {
+        case .jobCompleted(let segmentId, let result):
+            // Add completed transcription to the list
+            Task {
+                // Fetch segment to get the index
+                if let segment = try? await dataManager.fetchSegment(id: segmentId) {
+                    let transcriptionSegment = TranscriptionSegment(
+                        id: segmentId,
+                        index: segment.index,
+                        text: result.text,
+                        confidence: result.confidence,
+                        timestamp: Date()
+                    )
+
+                    // Insert in order by index
+                    if let insertIndex = transcriptionSegments.firstIndex(where: { $0.index > segment.index }) {
+                        transcriptionSegments.insert(transcriptionSegment, at: insertIndex)
+                    } else {
+                        transcriptionSegments.append(transcriptionSegment)
+                    }
+
+                    AppLogger.ui.info("Transcription completed for segment \(segment.index)")
+                }
+            }
+
+        case .jobQueued, .jobStarted, .jobRetrying, .jobFailed,
+             .serviceSwitched, .connectivityChanged, .drainingOfflineQueue:
+            // These events don't require UI updates in the recording view
             break
         }
     }
