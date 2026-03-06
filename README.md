@@ -44,7 +44,7 @@
 
 <p align="center">
   <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.09.png" width="250" alt="Session List - Empty State">
-  <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.24.png" width="250" alt="Session List - Sort Options">
+  <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.png" width="250" alt="Session List - Sort Options">
   <img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.37.png" width="250" alt="Pre-Recording Setup">
 </p>
 
