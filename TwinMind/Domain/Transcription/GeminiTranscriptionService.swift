@@ -37,7 +37,7 @@ public actor GeminiTranscriptionService: TranscriptionServiceProtocol {
         networkService: any NetworkServiceProtocol,
         keychainService: any KeychainServiceProtocol,
         encryptionService: any EncryptionServiceProtocol,
-        modelName: String = "gemini-2.5-flash"  // Modern model for March 2026
+        modelName: String = "gemini-2.0-flash"  // Modern model for March 2026
     ) {
         self.networkService = networkService
         self.keychainService = keychainService
