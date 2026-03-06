@@ -170,15 +170,25 @@ public actor DataManagerActor: DataManagerProtocol {
     public func deleteSession(id: UUID) async throws {
         let context = ModelContext(modelContainer)
 
-        guard let session = try await fetchSession(id: id) else {
-            throw AppError.recordNotFound(entityType: "RecordingSession", id: id.uuidString)
+        // Fetch the session in THIS context (not from fetchSession which uses a different context)
+        let sessionId = id
+        let predicate = #Predicate<RecordingSession> { session in
+            session.id == sessionId
         }
-
-        context.delete(session)
+        let descriptor = FetchDescriptor<RecordingSession>(predicate: predicate)
 
         do {
+            guard let session = try context.fetch(descriptor).first else {
+                throw AppError.recordNotFound(entityType: "RecordingSession", id: id.uuidString)
+            }
+
+            // Delete the session (cascade delete should handle segments and transcriptions)
+            context.delete(session)
             try context.save()
+
             AppLogger.data.info("Deleted session: \(id.uuidString)")
+        } catch let error as AppError {
+            throw error
         } catch {
             AppLogger.data.error("Failed to delete session", error: error)
             throw AppError.dataOperationFailed(operation: "deleteSession", reason: error.localizedDescription)
@@ -289,6 +299,23 @@ public actor DataManagerActor: DataManagerProtocol {
         } catch {
             AppLogger.data.error("Failed to update segment state", error: error)
             throw AppError.dataOperationFailed(operation: "updateSegmentTranscriptionState", reason: error.localizedDescription)
+        }
+    }
+
+    public func fetchSegment(id: UUID) async throws -> AudioSegment? {
+        let context = ModelContext(modelContainer)
+
+        let predicate = #Predicate<AudioSegment> { segment in
+            segment.id == id
+        }
+        let descriptor = FetchDescriptor<AudioSegment>(predicate: predicate)
+
+        do {
+            let segments = try context.fetch(descriptor)
+            return segments.first
+        } catch {
+            AppLogger.data.error("Failed to fetch segment: \(id.uuidString)", error: error)
+            throw AppError.dataOperationFailed(operation: "fetchSegment", reason: error.localizedDescription)
         }
     }
 
