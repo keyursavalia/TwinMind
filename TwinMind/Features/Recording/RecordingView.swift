@@ -28,30 +28,18 @@ public struct RecordingView: View {
     public var body: some View {
         ZStack(alignment: .top) {
             // Main content
-            VStack(spacing: 0) {
-                // Header
-                header
-                    .padding(.top, 12)
-                    .padding(.horizontal, 16)
+            if case .idle = viewModel.recordingState {
+                // Pre-recording setup screen (no header)
+                preRecordingSetup
+            } else {
+                // Active recording screen (with header)
+                VStack(spacing: 0) {
+                    activeRecordingHeader
+                        .padding(.top, 12)
+                        .padding(.horizontal, 16)
 
-                Spacer()
-
-                // Timer and audio level meter
-                VStack(spacing: 48) {
-                    timerDisplay
-                    audioLevelMeter
+                    activeRecordingView
                 }
-
-                Spacer()
-
-                // Controls
-                controls
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 32)
-
-                // Recording status
-                recordingStatus
-                    .padding(.bottom, 24)
             }
 
             // Error banner overlay
@@ -65,46 +53,299 @@ public struct RecordingView: View {
         .background(Color(.systemBackground))
         .onAppear {
             viewModel.startObserving()
-            // Start recording automatically when view appears
-            if case .idle = viewModel.recordingState {
-                viewModel.startRecording()
-            }
         }
         .onDisappear {
             viewModel.stopObserving()
-        }
-        .confirmationDialog("Select Quality", isPresented: $showingQualityPicker) {
-            ForEach(RecordingQuality.allCases, id: \.self) { quality in
-                Button(quality.displayName) {
-                    viewModel.selectedQuality = quality
-                }
-            }
-        } message: {
-            Text("Choose recording quality. Higher quality provides better transcription accuracy but uses more storage.")
         }
     }
 
     // MARK: - Subviews
 
-    private var header: some View {
+    private var preRecordingSetup: some View {
+        VStack(spacing: 0) {
+            // Top dismiss button
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Cancel")
+                        .font(.body)
+                        .foregroundStyle(.blue)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+
+            Spacer()
+
+            // Microphone icon
+            Image(systemName: "mic.circle.fill")
+                .font(.system(size: 80))
+                .foregroundStyle(.blue)
+                .padding(.bottom, 32)
+
+            // Session name field
+            VStack(spacing: 8) {
+                Text("Session Name")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                TextField("Enter session name", text: $viewModel.sessionName)
+                    .font(.title3)
+                    .multilineTextAlignment(.center)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 32)
+            }
+            .padding(.bottom, 40)
+
+            // Quality selector
+            VStack(spacing: 16) {
+                Text("Recording Quality")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                VStack(spacing: 12) {
+                    ForEach(RecordingQuality.allCases, id: \.self) { quality in
+                        qualityButton(quality)
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+
+            Spacer()
+
+            // Start recording button
+            Button {
+                viewModel.startRecording()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "circle.fill")
+                        .font(.title3)
+
+                    Text("Start Recording")
+                        .font(.headline)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.red)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 48)
+        }
+    }
+
+    private var activeRecordingView: some View {
+        VStack(spacing: 0) {
+            // Compact timer and audio level
+            VStack(spacing: 16) {
+                timerDisplay
+                    .padding(.top, 16)
+
+                audioLevelMeter
+
+                // Segment progress
+                HStack(spacing: 8) {
+                    Image(systemName: "waveform.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.blue)
+
+                    Text("\(viewModel.transcriptionSegments.count) / \(viewModel.totalSegmentCount) transcribed")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.bottom, 16)
+
+            // Divider
+            Divider()
+
+            // Live transcription display - takes most of the space
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Live Transcription")
+                        .font(.headline)
+
+                    Spacer()
+
+                    // Recording status indicator
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 8, height: 8)
+                            .opacity(isRecording ? 1.0 : 0.3)
+
+                        Text(viewModel.recordingState.displayString.uppercased())
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundStyle(statusTextColor)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+
+                if !viewModel.transcriptionSegments.isEmpty {
+                    transcriptionList
+                } else {
+                    // Empty state
+                    VStack(spacing: 12) {
+                        Image(systemName: "text.bubble")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary.opacity(0.5))
+                            .padding(.top, 40)
+
+                        Text("Recording audio...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Text("Transcription will appear here")
+                            .font(.caption)
+                            .foregroundStyle(.secondary.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+
+            // Controls at bottom
+            Divider()
+                .padding(.top, 8)
+
+            controls
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+        }
+    }
+
+    private var transcriptionList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(viewModel.transcriptionSegments) { segment in
+                        transcriptionSegmentRow(segment)
+                            .id(segment.id)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+            .onChange(of: viewModel.transcriptionSegments.count) { _, _ in
+                // Auto-scroll to the latest segment
+                if let lastSegment = viewModel.transcriptionSegments.last {
+                    withAnimation {
+                        proxy.scrollTo(lastSegment.id, anchor: .bottom)
+                    }
+                }
+            }
+        }
+    }
+
+    private func transcriptionSegmentRow(_ segment: TranscriptionSegment) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Header with segment number and confidence
+            HStack(alignment: .center, spacing: 8) {
+                Text("[\(segment.index + 1)]")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                if let confidence = segment.confidence {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(confidenceColor(confidence))
+
+                        Text("\(Int(confidence * 100))%")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Text(segment.timestamp.formatted(date: .omitted, time: .shortened))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Transcription text
+            Text(segment.text)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func qualityButton(_ quality: RecordingQuality) -> some View {
+        Button {
+            viewModel.selectedQuality = quality
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(quality.rawValue.capitalized)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    Text(quality.detailDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if viewModel.selectedQuality == quality {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.blue)
+                }
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(
+                viewModel.selectedQuality == quality
+                    ? Color.blue.opacity(0.1)
+                    : Color(.secondarySystemBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        viewModel.selectedQuality == quality
+                            ? Color.blue
+                            : Color.clear,
+                        lineWidth: 2
+                    )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var activeRecordingHeader: some View {
         HStack {
             // Dismiss button
             Button {
                 handleDismiss()
             } label: {
-                Text("Dismiss")
+                Image(systemName: "xmark")
                     .font(.body)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             // Session name and audio device
             VStack(spacing: 4) {
-                TextField("Session Name", text: $viewModel.sessionName)
+                Text(viewModel.sessionName.isEmpty ? "Recording" : viewModel.sessionName)
                     .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .textFieldStyle(.plain)
+                    .lineLimit(1)
 
                 HStack(spacing: 4) {
                     Image(systemName: viewModel.audioRoute.inputIconName)
@@ -118,34 +359,41 @@ public struct RecordingView: View {
 
             Spacer()
 
-            // Invisible spacer for symmetry
-            Color.clear
-                .frame(width: 70)
+            // Stop button
+            Button {
+                handleStop()
+            } label: {
+                Text("Stop")
+                    .font(.body)
+                    .foregroundStyle(.red)
+            }
         }
     }
 
     private var timerDisplay: some View {
         Text(formattedElapsedTime)
-            .font(.system(size: 64, weight: .thin, design: .default))
+            .font(.system(size: 48, weight: .thin, design: .default))
             .monospacedDigit()
-            .tracking(4)
+            .tracking(2)
             .foregroundStyle(timerColor)
     }
 
     private var audioLevelMeter: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             ForEach(0..<13, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 4)
                     .fill(barColor(for: index))
-                    .frame(width: 6, height: barHeight(for: index))
+                    .frame(width: 5, height: barHeight(for: index))
             }
         }
-        .frame(height: 48)
+        .frame(height: 32)
         .animation(.easeInOut(duration: 0.1), value: viewModel.audioLevel)
     }
 
     private var controls: some View {
-        HStack(spacing: 32) {
+        HStack(spacing: 24) {
+            Spacer()
+
             // Pause/Resume button
             Button {
                 if case .recording = viewModel.recordingState {
@@ -154,63 +402,25 @@ public struct RecordingView: View {
                     viewModel.resumeRecording()
                 }
             } label: {
-                Image(systemName: pauseResumeIcon)
-                    .font(.system(size: 32))
-                    .foregroundStyle(.primary)
-                    .frame(width: 64, height: 64)
-                    .background(Color(.systemGray6))
-                    .clipShape(Circle())
+                HStack(spacing: 12) {
+                    Image(systemName: pauseResumeIcon)
+                        .font(.title3)
+
+                    Text(pauseResumeLabel)
+                        .font(.headline)
+                }
+                .foregroundStyle(.white)
+                .frame(minWidth: 140)
+                .padding(.vertical, 14)
+                .background(isRecording ? Color.orange : Color.green)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             .disabled(!canPauseOrResume)
 
-            // Stop button
-            Button {
-                handleStop()
-            } label: {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.red)
-                    .frame(width: 32, height: 32)
-                    .frame(width: 80, height: 80)
-                    .background(Color(.systemGray6))
-                    .clipShape(Circle())
-            }
-
-            // Quality button
-            Button {
-                showingQualityPicker = true
-            } label: {
-                VStack(spacing: 2) {
-                    Text(qualityShortName)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-
-                    Text("Quality")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(width: 64, height: 64)
-                .background(Color(.systemGray6))
-                .clipShape(Circle())
-            }
-            .disabled(isRecording)
+            Spacer()
         }
     }
 
-    private var recordingStatus: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(Color.red)
-                .frame(width: 8, height: 8)
-                .opacity(isRecording ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 1.0).repeatForever(), value: isRecording)
-
-            Text(viewModel.recordingState.displayString.uppercased())
-                .font(.caption)
-                .fontWeight(.medium)
-                .tracking(1.5)
-                .foregroundStyle(statusTextColor)
-        }
-    }
 
     private func errorBanner(error: AppError) -> some View {
         HStack(spacing: 12) {
@@ -279,18 +489,24 @@ public struct RecordingView: View {
         return "pause.fill"
     }
 
+    private var pauseResumeLabel: String {
+        if case .paused = viewModel.recordingState {
+            return "Resume"
+        }
+        return "Pause"
+    }
+
     private var statusTextColor: Color {
         isRecording ? .red : .secondary
     }
 
-    private var qualityShortName: String {
-        switch viewModel.selectedQuality {
-        case .high:
-            return "High"
-        case .medium:
-            return "Med"
-        case .low:
-            return "Low"
+    private func confidenceColor(_ confidence: Double) -> Color {
+        if confidence >= 0.8 {
+            return .green
+        } else if confidence >= 0.6 {
+            return .orange
+        } else {
+            return .red
         }
     }
 
@@ -306,8 +522,8 @@ public struct RecordingView: View {
     }
 
     private func barHeight(for index: Int) -> CGFloat {
-        let baseHeight: CGFloat = 12
-        let maxHeight: CGFloat = 48
+        let baseHeight: CGFloat = 8
+        let maxHeight: CGFloat = 32
         let increment = (maxHeight - baseHeight) / 12
 
         return baseHeight + (CGFloat(index) * increment)
