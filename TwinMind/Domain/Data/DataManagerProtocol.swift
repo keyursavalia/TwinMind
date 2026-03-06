@@ -101,6 +101,13 @@ public protocol DataManagerProtocol: Actor {
     /// - Throws: `AppError.dataOperationFailed` if update fails.
     func updateSegmentTranscriptionState(segmentId: UUID, state: TranscriptionState) async throws
 
+    /// Fetches a single segment by ID.
+    ///
+    /// - Parameter id: The segment ID.
+    /// - Returns: The segment, or `nil` if not found.
+    /// - Throws: `AppError.dataOperationFailed` if fetch fails.
+    func fetchSegment(id: UUID) async throws -> AudioSegment?
+
     /// Fetches segments for a specific session.
     ///
     /// - Parameters:
