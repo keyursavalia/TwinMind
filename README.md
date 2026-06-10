@@ -70,3 +70,56 @@ The experience on the surface is simple: tap to record, come back to your transc
 - **Live Activity and Dynamic Island**: real-time recording state, elapsed timer, input device name, transcription progress (`x/y segments`), and audio level bars — updated at most once per second
 - **App Intents**: `StartRecordingIntent` and `StopRecordingIntent` for Siri and Shortcuts; both handle edge cases gracefully (already recording, no active session)
 - **WidgetKit**: home screen widget showing the most recent session state and a quick-start control
+
+---
+
+## Architecture
+
+The app uses a strict five-layer architecture enforced at the type level by Swift 6's concurrency model. No layer may import or call into a layer above it. Cross-layer communication happens through `async` method calls and `AsyncStream` — never `NotificationCenter` or shared mutable state.
+
+```
+SwiftUI Views
+    │  (read @Observable ViewModels only)
+    ▼
+@Observable ViewModels          ← @MainActor, owns all UI state
+    │  (call actor methods via await)
+    ▼
+Domain Actors                   ← AudioEngineActor · TranscriptionPipelineActor · DataManagerActor
+    │  (use infrastructure services)
+    ▼
+Infrastructure Services         ← KeychainService · EncryptionService · NetworkService · AudioFileManager
+    │  (wrap system frameworks)
+    ▼
+System Frameworks               ← AVFoundation · SwiftData · CryptoKit · NWPathMonitor · ActivityKit
+```
+
+### The event bus
+
+`AudioEngineActor` emits an `AsyncStream<AudioEngineEvent>`. `TranscriptionPipelineActor` consumes that stream and dispatches `SegmentJob` values into its own processing queue. `DataManagerActor` receives completed transcriptions and persists them. ViewModels observe state changes by awaiting actor methods — they never hold domain state themselves.
+
+```swift
+enum AudioEngineEvent: Sendable {
+    case stateChanged(RecordingState)
+    case segmentReady(SegmentJob)
+    case levelUpdate(Float)
+    case routeChanged(AudioRouteInfo)
+    case error(AppError)
+}
+```
+
+### Protocol-driven dependency injection
+
+Every actor and service conforms to a protocol. Dependencies are injected through initializers — no singletons, no `@EnvironmentObject`. `AppDependencies` is instantiated exactly once at app launch and passed via `@Environment` with a custom key.
+
+```
+AudioEngineProtocol        ← AudioEngineActor / MockAudioEngine
+TranscriptionProtocol      ← WhisperAPIService / AppleSpeechService / LocalWhisperService (stub)
+DataManagerProtocol        ← DataManagerActor / MockDataManager
+NetworkServiceProtocol     ← NetworkService / MockNetworkService
+KeychainServiceProtocol    ← KeychainService / MockKeychainService
+EncryptionServiceProtocol  ← EncryptionService / MockEncryptionService
+```
+
+### Swift 6 concurrency rules
+
+All actors use the `actor` keyword — not classes with serial queues. All `@Observable` ViewModels are `@MainActor` — explicitly annotated, never inferred. `@Sendable` is required on every closure passed to a `Task` or `TaskGroup`. `DispatchQueue` does not appear anywhere in the codebase.
