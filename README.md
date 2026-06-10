@@ -123,3 +123,19 @@ EncryptionServiceProtocol  ← EncryptionService / MockEncryptionService
 ### Swift 6 concurrency rules
 
 All actors use the `actor` keyword — not classes with serial queues. All `@Observable` ViewModels are `@MainActor` — explicitly annotated, never inferred. `@Sendable` is required on every closure passed to a `Task` or `TaskGroup`. `DispatchQueue` does not appear anywhere in the codebase.
+
+---
+
+## Security
+
+Every sensitive piece of data in VoiceNote is handled with a specific, deliberate mechanism. None of these are defaults — they were each chosen and enforced explicitly.
+
+| Component | Mechanism |
+|---|---|
+| **Audio files at rest** | AES-256-GCM via CryptoKit `AES.GCM` — applied at the segment boundary, before the file path is emitted on the event stream |
+| **Plaintext cleanup** | The unencrypted segment file is deleted immediately after successful encryption; it never lingers |
+| **Encryption key** | Generated on first launch, stored in Keychain with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` — accessible in background, never written to disk |
+| **API key** | Read from `Info.plist` on first launch, moved to Keychain immediately, never stored anywhere else; re-read from Keychain on each use |
+| **Transport** | `NSAppTransportSecurity` in `Info.plist` has `NSAllowsArbitraryLoads: false` — HTTPS enforced at the configuration layer, not just in code |
+| **Memory** | Audio tap buffers are zeroed via `memset` on the `UnsafeMutablePointer` from `floatChannelData` after each segment write |
+| **Logging** | No API keys, encryption keys, or file paths appear in any log statement in production builds — sensitive paths are guarded by `#if DEBUG` |
