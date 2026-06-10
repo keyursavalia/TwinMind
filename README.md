@@ -269,3 +269,38 @@ VoiceNoteWidget/                        # WidgetKit extension target
 VoiceNoteTests/                         # XCTest unit, integration, and performance tests
 VoiceNoteUITests/                       # XCTest UI tests for critical recording flows
 ```
+
+---
+
+## Getting Started
+
+**Requirements:** Xcode 16 and an iOS 17 simulator or device. One API key required.
+
+```bash
+git clone https://github.com/keyursavalia/TwinMind.git
+cd TwinMind
+open TwinMind.xcodeproj
+```
+
+In `TwinMind/Info.plist`, add your Google AI API key:
+
+```xml
+<key>GEMINI_API_KEY</key>
+<string>YOUR_KEY_HERE</string>
+```
+
+On first launch the app reads the key from `Info.plist`, stores it in Keychain, and removes it from the plist entry. All subsequent reads come from Keychain only.
+
+Press `Cmd R`. The app initializes SwiftData, generates an encryption key, and shows the session list in its empty state.
+
+For full functionality — background audio, Live Activities, Dynamic Island, and route change handling — a physical device is recommended. The simulator supports the core recording and transcription flow but has known limitations with `AVAudioSession` route changes and `ActivityKit`.
+
+### Running the tests
+
+```bash
+xcodebuild test \
+  -scheme TwinMind \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+```
+
+Or press `Cmd U` in Xcode. Tests use `MockURLProtocol` for all network calls — no real API is contacted during the test suite.
