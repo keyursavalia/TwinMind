@@ -139,3 +139,24 @@ Every sensitive piece of data in VoiceNote is handled with a specific, deliberat
 | **Transport** | `NSAppTransportSecurity` in `Info.plist` has `NSAllowsArbitraryLoads: false` — HTTPS enforced at the configuration layer, not just in code |
 | **Memory** | Audio tap buffers are zeroed via `memset` on the `UnsafeMutablePointer` from `floatChannelData` after each segment write |
 | **Logging** | No API keys, encryption keys, or file paths appear in any log statement in production builds — sensitive paths are guarded by `#if DEBUG` |
+
+---
+
+## Tech Stack
+
+| | |
+|---|---|
+| **Language** | Swift 6 — strict concurrency enabled, `@Sendable` enforced throughout |
+| **UI framework** | SwiftUI — `@Observable` ViewModels, no `ObservableObject` |
+| **Persistence** | SwiftData — `RecordingSession`, `AudioSegment`, `TranscriptionResult` |
+| **Audio** | AVFoundation — `AVAudioEngine` input node tap, `AVAudioSession` lifecycle management |
+| **Encryption** | CryptoKit — `AES.GCM` for segment files, `SymmetricKey` stored in Keychain |
+| **Keychain** | Security framework — direct `SecItem` API wrapped in `KeychainService` |
+| **Networking** | URLSession — multipart `form-data` for Gemini and Whisper-compatible endpoints |
+| **Connectivity** | Network framework — `NWPathMonitor` for offline detection and queue drain |
+| **Transcription (primary)** | Google Gemini API — `gemini-2.0-flash` via `generateContent` |
+| **Transcription (fallback)** | Apple Speech framework — `SFSpeechRecognizer` used after 5 consecutive API failures |
+| **System integrations** | ActivityKit, AppIntents, WidgetKit |
+| **Logging** | `os.Logger` — per-subsystem and per-category, subsystem `com.voicenote.app` |
+| **Deployment target** | iOS 17.0+ |
+| **Third-party dependencies** | None |
