@@ -304,3 +304,26 @@ xcodebuild test \
 ```
 
 Or press `Cmd U` in Xcode. Tests use `MockURLProtocol` for all network calls — no real API is contacted during the test suite.
+
+---
+
+## What's Next
+
+- **Audio playback** — scrubbing and playback of recorded sessions directly in the app, with per-segment seeking
+- **Export** — share a full session as `.txt`, `.srt` (timestamped subtitle format), or a zipped `.m4a` + transcript bundle
+- **Full-text search** — search across transcription content, not just session names
+- **Encryption key rotation** — per-install key is the MVP approach; a rotation strategy with secure re-encryption is the obvious follow-up
+- **iCloud sync** — CloudKit-backed sync for sessions across devices, with conflict resolution at the segment level
+- **Accessibility pass** — thorough VoiceOver audit across recording, session list, and detail screens
+
+---
+
+## Contributing
+
+Fork the repo, branch from `main`, one fix or feature per PR. Commit format follows Conventional Commits: `type(scope): description`. Bug reports and ideas are welcome as GitHub issues.
+
+---
+
+## License
+
+[MIT](LICENSE) · © 2026 Keyur Savalia
