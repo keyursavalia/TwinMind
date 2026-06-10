@@ -160,3 +160,112 @@ Every sensitive piece of data in VoiceNote is handled with a specific, deliberat
 | **Logging** | `os.Logger` — per-subsystem and per-category, subsystem `com.voicenote.app` |
 | **Deployment target** | iOS 17.0+ |
 | **Third-party dependencies** | None |
+
+---
+
+## Project Structure
+
+```
+TwinMind/
+├── App/
+│   ├── VoiceNoteApp.swift              # @main, environment injection, dependency wiring
+│   ├── AppDependencies.swift           # Single dependency container — not a singleton
+│   └── Configuration/
+│       └── ConfigurationManager.swift  # API key bootstrap from Info.plist → Keychain
+│
+├── Domain/
+│   ├── Models/                         # Pure Swift value types and enums — no imports
+│   │   ├── RecordingState.swift
+│   │   ├── TranscriptionState.swift
+│   │   ├── SessionState.swift
+│   │   ├── RecordingQuality.swift      # High / Medium / Low presets with segment duration
+│   │   ├── SegmentJob.swift
+│   │   └── AppError.swift              # Typed error enum across all domains
+│   │
+│   ├── Audio/
+│   │   ├── AudioEngineProtocol.swift
+│   │   ├── AudioEngineActor.swift      # AVAudioEngine lifecycle, tap, segmentation
+│   │   ├── AudioSessionConfigurator.swift
+│   │   ├── AudioSegmentWriter.swift    # Rolling 30s file writer with encryption handoff
+│   │   └── AudioLevelMeter.swift
+│   │
+│   ├── Transcription/
+│   │   ├── TranscriptionServiceProtocol.swift
+│   │   ├── TranscriptionPipelineActor.swift  # Queue, retry, fallback, offline drain
+│   │   ├── GeminiTranscriptionService.swift  # Multipart form-data to Gemini
+│   │   ├── AppleSpeechService.swift          # SFSpeechRecognizer fallback
+│   │   └── LocalWhisperService.swift         # Protocol stub — not bundled in MVP
+│   │
+│   └── Data/
+│       ├── DataManagerProtocol.swift
+│       ├── DataManagerActor.swift      # All SwiftData operations, pagination, batch insert
+│       ├── Models/
+│       │   ├── RecordingSession.swift
+│       │   ├── AudioSegment.swift
+│       │   └── TranscriptionResult.swift
+│       └── Queries/
+│           └── SessionQueries.swift    # Reusable #Predicate and SortDescriptor definitions
+│
+├── Infrastructure/
+│   ├── Keychain/
+│   │   ├── KeychainServiceProtocol.swift
+│   │   └── KeychainService.swift
+│   ├── Encryption/
+│   │   ├── EncryptionServiceProtocol.swift
+│   │   └── EncryptionService.swift     # AES-256-GCM encrypt / decrypt with buffer zeroing
+│   ├── Network/
+│   │   ├── NetworkServiceProtocol.swift
+│   │   └── NetworkService.swift        # URLSession wrapper with typed errors
+│   └── Storage/
+│       └── AudioFileManager.swift
+│
+├── Features/
+│   ├── Recording/
+│   │   ├── RecordingViewModel.swift
+│   │   ├── RecordingView.swift
+│   │   ├── RecordingControlsView.swift
+│   │   └── AudioLevelMeterView.swift   # 13-bar animated waveform
+│   ├── SessionList/
+│   │   ├── SessionListViewModel.swift
+│   │   ├── SessionListView.swift
+│   │   └── SessionRowView.swift
+│   ├── SessionDetail/
+│   │   ├── SessionDetailViewModel.swift
+│   │   ├── SessionDetailView.swift
+│   │   └── TranscriptionSegmentRowView.swift
+│   └── Permissions/
+│       ├── PermissionViewModel.swift
+│       └── PermissionView.swift
+│
+├── SystemIntegrations/
+│   ├── LiveActivity/
+│   │   ├── RecordingActivityAttributes.swift  # Shared via App Group
+│   │   └── LiveActivityManager.swift          # Rate-limited to 1 update/second
+│   ├── AppIntents/
+│   │   ├── StartRecordingIntent.swift
+│   │   ├── StopRecordingIntent.swift
+│   │   └── VoiceNoteShortcuts.swift           # AppShortcutsProvider, 2+ phrases per intent
+│   └── Widget/
+│       └── (VoiceNoteWidget target)
+│
+├── Shared/
+│   ├── UI/
+│   │   ├── ErrorBannerView.swift
+│   │   ├── OfflineStatusBannerView.swift
+│   │   └── EmptyStateView.swift
+│   ├── Extensions/
+│   │   ├── Date+Formatting.swift
+│   │   └── Double+Duration.swift
+│   └── Logging/
+│       └── AppLogger.swift             # os.Logger wrappers — one per subsystem category
+│
+└── Resources/
+    ├── Assets.xcassets
+    ├── Info.plist
+    └── VoiceNote.entitlements
+
+RecordingActivityExtension/             # Live Activity widget extension target
+VoiceNoteWidget/                        # WidgetKit extension target
+VoiceNoteTests/                         # XCTest unit, integration, and performance tests
+VoiceNoteUITests/                       # XCTest UI tests for critical recording flows
+```
