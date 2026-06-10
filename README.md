@@ -31,3 +31,42 @@ The challenge was not the feature list itself but building each piece to a stand
 VoiceNote records audio continuously in the background, slices it into 30-second segments, encrypts each segment to disk, and sends them to Google Gemini for transcription — all in parallel, all while you are doing something else. When connectivity is unavailable, segments queue locally and drain automatically when the network returns. When the API fails repeatedly, the app switches transparently to Apple Speech Recognition as a fallback. Every session, segment, and transcription is persisted in SwiftData and browseable at any time.
 
 The experience on the surface is simple: tap to record, come back to your transcript. The engineering underneath is the point.
+
+---
+
+## Features
+
+### Recording
+
+- Continuous audio recording via `AVAudioEngine` with a single input node tap — no `AVAudioRecorder`, no restarts between segments
+- Background recording: `UIBackgroundModes: audio` keeps the tap alive when the app is not in the foreground
+- Three quality presets — High (48 kHz / 32-bit), Medium (22 kHz / 16-bit), Low (16 kHz / 16-bit) — selectable before each session
+- Live audio level metering at up to 10 Hz, computed from `floatChannelData` in the tap buffer and normalized to 0.0–1.0
+- Interruption handling: phone calls, Siri, and alarms correctly pause the engine; sessions resume automatically when `shouldResume` is true
+- Route change handling: pulling out headphones reconfigures the session and rebuilds the engine graph without dropping the current segment file
+
+### Segmentation and Encryption
+
+- Every 30 seconds, the current `AVAudioFile` is closed, encrypted, and a new one is opened — seamlessly, with no gap in the recording
+- Encryption uses AES-256-GCM via CryptoKit's `AES.GCM` API; the plaintext file is deleted immediately after successful encryption
+- The encryption key lives in Keychain under `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` — survives device restarts, never touches disk unprotected
+
+### Transcription
+
+- Up to 3 segments are transcribed concurrently using `withThrowingTaskGroup`
+- Exponential backoff on failure: delays of 2, 4, 8, and 16 seconds across up to 5 attempts per segment
+- After 5 consecutive global failures across any segments, `TranscriptionPipelineActor` switches from Google Gemini to Apple Speech Recognition automatically; the counter resets on any success
+- Offline queue: when `NWPathMonitor` reports the path as unsatisfied, new jobs are persisted as `.pending` in SwiftData; `drainOfflineQueue()` runs on path restoration
+
+### Session Management
+
+- Sessions grouped by date — Today, Yesterday, and calendar dates for older entries
+- Search across session names; sort by newest, oldest, name, or duration
+- Per-session detail view with segment-by-segment transcription progress and timestamps
+- Swipe to delete — cascade delete removes all segments and transcriptions
+
+### System Integrations
+
+- **Live Activity and Dynamic Island**: real-time recording state, elapsed timer, input device name, transcription progress (`x/y segments`), and audio level bars — updated at most once per second
+- **App Intents**: `StartRecordingIntent` and `StopRecordingIntent` for Siri and Shortcuts; both handle edge cases gracefully (already recording, no active session)
+- **WidgetKit**: home screen widget showing the most recent session state and a quick-start control
