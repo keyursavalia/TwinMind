@@ -51,6 +51,14 @@ The experience on the surface is simple: tap to record, come back to your transc
   <td align="center"><img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.37.png" width="220" alt="New recording setup" /><br/><sub>Session name · quality preset (High / Medium / Low)</sub></td>
 </tr></table>
 
+<br/>
+
+### Active Recording
+
+<table align="center"><tr>
+  <td align="center"><img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.47.png" width="220" alt="Active recording screen" /><br/><sub>Live timer · audio level meter · real-time transcription</sub></td>
+</tr></table>
+
 ---
 
 ## Features
