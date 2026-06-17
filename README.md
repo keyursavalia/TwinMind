@@ -40,6 +40,7 @@ The experience on the surface is simple: tap to record, come back to your transc
 
 <table align="center"><tr>
   <td align="center"><img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.09.png" width="220" alt="Session list empty state" /><br/><sub>Empty state — no sessions yet</sub></td>
+  <td align="center"><img src="Screenshots/Simulator Screenshot - iPhone 17 Pro - 2026-03-05 at 18.17.17.png" width="220" alt="Sort options menu" /><br/><sub>Sort — Newest, Oldest, Name, Duration</sub></td>
 </tr></table>
 
 ---
